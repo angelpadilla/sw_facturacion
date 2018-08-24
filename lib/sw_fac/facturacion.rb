@@ -1,13 +1,14 @@
 
 module SwFac
-  class Facturacion
+  class Facturacion < Config
 
   	# def initialize()
   		
   	# end
 
-  	def hola
-  		puts 'asdjaoisdjoaisdj'
+  	def timbra_doc
+  		# uri = 
+  		return @production == false
   	end
   end
 end
