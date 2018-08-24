@@ -2,15 +2,33 @@ module SwFac
   class Config
     # attr_accessor :production_token, :dev_token
     attr_accessor :production_token, :dev_token, :doc_cer_path, :doc_key_path
+    attr_reader :pem, :serial, :cadena
 
     def initialize(params = {})
+      @rfc = params.fetch(:rfc, '')
+      @razon = params.fetch(:razon, '')
       @production_token = params.fetch(:production_token, 'test')
-      @dev_token = params.fetch(:dev_token, 'test')
+      @dev_token = params.fetch(:development_token, '')
 
       @doc_key_path = params.fetch(:doc_key_path, '')
       @key_pass = params.fetch(:key_pass, '')
 
       @doc_cer_path = params.fetch(:doc_cer_path, '')
+      @production = params.fetch(:production, false)
+
+      if @doc_key_path.size > 0 and @key_pass.size > 0
+        @pem = key_to_pem
+      else
+        @pem = ''
+      end
+
+      if @doc_cer_path.size > 0
+        @serial = serial_number 
+        @cadena = cer_cadena
+      else
+        @serial = '' 
+        @cadena = ''
+      end
       
     end
 

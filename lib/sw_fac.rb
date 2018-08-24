@@ -1,3 +1,4 @@
+require "sw_fac/facturacion"
 require "sw_fac/version"
 require "sw_fac/config"
 
@@ -9,9 +10,6 @@ require 'securerandom'
 
 # External gems
 require 'nokogiri'
-
-
-
 
 module SwFac
 
