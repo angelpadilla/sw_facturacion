@@ -4,11 +4,12 @@ module SwFac
     attr_accessor :production_token, :dev_token, :doc_cer_path, :doc_key_path
     attr_reader :pem, :serial, :cadena
 
-    def initialize(production_token, development_token, rfc, razon, doc_key_path, key_pass, doc_cer_path, production=false)
+    def initialize(production_token, development_token, rfc, razon, regimen, doc_key_path, key_pass, doc_cer_path, production=false)
       @production_token = production_token.to_s
       @dev_token = development_token.to_s
       @rfc = rfc.to_s
       @razon = razon.to_s
+      @regimen_fiscal = regimen
       @doc_key_path = doc_key_path.to_s
       @key_pass = key_pass.to_s
       @doc_cer_path = doc_cer_path
