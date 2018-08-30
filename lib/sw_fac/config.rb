@@ -2,7 +2,7 @@ module SwFac
   class Config
     # attr_accessor :production_token, :dev_token
     attr_accessor :production_token, :dev_token, :doc_cer_path, :doc_key_path
-    attr_reader :pem, :serial, :cadena
+    attr_reader :pem, :serial, :cadena, :key_pass, :pem_cadena
 
     def initialize(production_token, development_token, rfc, razon, regimen, doc_key_path, key_pass, doc_cer_path, production=false)
       @production_token = production_token.to_s
@@ -23,6 +23,10 @@ module SwFac
 
     def key_to_pem
       @pem = %x[openssl pkcs8 -inform DER -in #{@doc_key_path} -passin pass:#{@key_pass}]
+      @pem_cadena = @pem.clone
+      @pem_cadena.slice!("-----BEGIN PRIVATE KEY-----")
+      @pem_cadena.slice!("-----END PRIVATE KEY-----")
+      @pem_cadena.delete!("\n")
     end
 
     def serial_number
