@@ -58,7 +58,7 @@ module SwFac
   end
 
 
-  UrlProduction = "http://services.test.sw.com.mx/"
+  UrlProduction = "http://services.sw.com.mx/"
   UrlDev = "http://services.test.sw.com.mx/"
 
   DocBase = %(<?xml version="1.0" encoding="utf-8"?><cfdi:Comprobante xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd" Version="3.3" xmlns:cfdi="http://www.sat.gob.mx/cfd/3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><cfdi:Emisor /><cfdi:Receptor /><cfdi:Conceptos></cfdi:Conceptos><cfdi:Impuestos><cfdi:Traslados><cfdi:Traslado Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" /></cfdi:Traslados></cfdi:Impuestos></cfdi:Comprobante>)

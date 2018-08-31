@@ -3,7 +3,178 @@ module SwFac
   class Facturacion < Config
 
   	def comp_pago(params={})
-  		
+  		# Sample params
+  		# params = {
+  		# 	uuid: '',
+  		# 	venta_folio: '',
+  		#   cp: '',
+  		# 	receptor_razon: 'Car zone',
+				# receptor_rfc: 'XAXX010101000',
+				# forma_pago: '01',
+				# total: 100.00,
+  		# 	time: '',
+  		# 	modena: '',
+  		# 	line_items: [
+  		# 		{
+  		# 			monto: 60.00,
+  		# 			moneda: '',
+  		# 		},
+  		# 	]
+  		# }
+
+  		raise 'Error - la suma de los complementos de pago es mayor al total reportado' if (params[:line_items].inject(0) {|sum, x| sum + x[:monto].to_f }) > params[:total].to_f
+
+  		uri = @production ? URI("#{SwFac::UrlProduction}cfdi33/stamp/customv1/b64") : URI("#{SwFac::UrlDev}cfdi33/stamp/customv1/b64")
+  		token = @production ? @production_token : @dev_token
+  		time = params.fetch(:time, Time.now)
+
+  		base_doc = %(<?xml version="1.0" encoding="UTF-8"?>
+          <cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pago10="http://www.sat.gob.mx/Pagos" xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd http://www.sat.gob.mx/Pagos http://www.sat.gob.mx/sitio_internet/cfd/Pagos/Pagos10.xsd" Version="3.3" SubTotal="0" Total="0" Moneda="XXX" TipoDeComprobante="P" >
+              <cfdi:Emisor />
+              <cfdi:Receptor UsoCFDI="P01"/>
+              <cfdi:Conceptos>
+                  <cfdi:Concepto ClaveProdServ="84111506" Cantidad="1" ClaveUnidad="ACT" Descripcion="Pago" ValorUnitario="0" Importe="0" />
+              </cfdi:Conceptos>
+              <cfdi:Complemento>
+                  <pago10:Pagos Version="1.0">
+                      <pago10:Pago>
+                      </pago10:Pago>
+                  </pago10:Pagos>
+              </cfdi:Complemento>
+          </cfdi:Comprobante>)
+
+      base_doc.delete!("\n")
+			base_doc.delete!("\t")
+
+			xml = Nokogiri::XML(base_doc)
+      comprobante = xml.at_xpath("//cfdi:Comprobante")
+      comprobante['Serie'] = 'P'
+      comprobante['Folio'] = params[:venta_folio].to_s
+      comprobante['Fecha'] = time.strftime("%Y-%m-%dT%H:%M:%S")
+      comprobante['LugarExpedicion'] = params[:cp].to_s
+      comprobante['NoCertificado'] = @serial
+      comprobante['Certificado'] = @cadena
+      emisor = xml.at_xpath("//cfdi:Emisor")
+      emisor['Rfc'] = @rfc
+      emisor['Nombre'] = @razon
+      emisor['RegimenFiscal'] = @regimen_fiscal
+      receptor = xml.at_xpath("//cfdi:Receptor")
+      receptor['Nombre'] = params[:receptor_razon].to_s
+      receptor['Rfc'] = params[:receptor_rfc].to_s
+
+      child_pago = xml.at_xpath("//pago10:Pago")
+      child_pago['FechaPago'] = time.strftime("%Y-%m-%dT%H:%M:%S")
+      child_pago['FormaDePagoP'] = params[:forma_pago].to_s
+      child_pago['MonedaP'] = params.fetch(:moneda, 'MXN')
+      child_pago['Monto'] = params[:total].round(2).to_s
+
+      saldo_anterior = params[:total].to_f
+
+      params[:line_items].each_with_index do |line, index|
+      	monto = line[:monto].to_f
+      	child_pago_relacionado = Nokogiri::XML::Node.new "pago10:DoctoRelacionado", xml
+        child_pago_relacionado['IdDocumento'] = params[:uuid]
+        child_pago_relacionado['MonedaDR'] = line.fetch(:moneda, 'MXN') 
+        child_pago_relacionado['MetodoDePagoDR'] = 'PPD'
+        child_pago_relacionado['NumParcialidad'] = (index + 1).to_s
+
+        child_pago_relacionado['ImpSaldoAnt'] = (saldo_anterior).to_s
+        child_pago_relacionado['ImpPagado'] = monto.round(2).to_s
+        child_pago_relacionado['ImpSaldoInsoluto'] = (saldo_anterior - monto).to_s
+        saldo_anterior -= monto 
+
+        child_pago.add_child(child_pago_relacionado)
+      end
+
+      # puts '---------------- Xml resultante comprobante de pago -----------------------'
+      # puts xml.to_xml
+      # puts '--------------------------------------------------------'
+
+      path = File.join(File.dirname(__FILE__), *%w[.. tmp])
+	    id = SecureRandom.hex
+
+    	FileUtils.mkdir_p(path) unless File.exist?(path)
+			File.write("#{path}/tmp_c_#{id}.xml", xml.to_xml)
+			xml_path = "#{path}/tmp_c_#{id}.xml"
+	    cadena_path = File.join(File.dirname(__FILE__), *%w[.. cadena cadena33.xslt])
+
+	    File.write("#{path}/pem_#{id}.pem", @pem)
+	    key_pem_url = "#{path}/pem_#{id}.pem"
+	    sello = %x[xsltproc #{cadena_path} #{xml_path} | openssl dgst -sha256 -sign #{key_pem_url} | openssl enc -base64 -A]
+	    comprobante['Sello'] = sello
+
+	    File.delete("#{xml_path}")
+    	File.delete("#{key_pem_url}")
+
+	    # puts '------ comprobante de pago antes de timbre -------'
+	    # puts xml.to_xml
+
+			base64_xml = Base64.encode64(xml.to_xml)
+      request = Net::HTTP::Post.new(uri)
+      request.basic_auth(token, "")
+      request.content_type = "application/json"
+      request["cache-control"] = 'no-cache'
+      request.body = JSON.dump({
+        "credentials" => {
+            "id" => params[:venta_folio].to_s,
+            "token" => token.to_s
+        },
+        "issuer" => {
+            "rfc" => @rfc
+        },
+        "document" => {
+          "ref-id": params[:venta_folio].to_s,
+          "certificate-number": @serial,
+          "section": "all",
+          "format": "xml",
+          "template": "letter",
+          "type": "application/xml",
+          "content": base64_xml
+        }
+      })
+
+      req_options = {
+        use_ssl: false,
+      }
+
+      json_response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+          http.request(request)
+      end
+      puts "-- #{json_response.code} --"
+      puts "-- #{json_response.message} --"
+      # puts "-- Body --"
+      # puts json_response.body
+      # puts '---'
+      response = JSON.parse(json_response.body)
+
+      if json_response.code == '200'
+	    	decoded_xml = Nokogiri::XML(Base64.decode64(response['content']))
+		    timbre = decoded_xml.at_xpath("//cfdi:Complemento").children[1]
+		    response = {
+	      	status: 200,
+	      	message_error: '',
+	      	xml: decoded_xml.to_xml,
+	      	uuid: response['uuid'],
+	      	fecha_timbrado: timbre['FechaTimbrado'],
+	      	sello_cfd: timbre['SelloCFD'],
+	      	sello_sat: timbre['SelloSAT'],
+	      	no_certificado_sat: timbre['NoCertificadoSAT'],
+	      }
+	      return response
+	    else
+	    	response = {
+	    		status: json_response.code,
+	      	message_error: "Error message: #{json_response.message}, #{response['message']} #{response['error_details']}",
+	      	xml: '',
+	      	uuid: '',
+	      	fecha_timbrado: '',
+	      	sello_cfd: '',
+	      	sello_sat: '',
+	      	no_certificado_sat: '',
+	    	}
+	      return response
+	    end
+
   	end
 
   	def nota_credito(params={})
@@ -20,8 +191,6 @@ module SwFac
 			#	  receptor_rfc: '',
 			#	  uso_cfdi: '',
   		# }
-
-  		
 
   		total = (params[:monto]).to_f
 			subtotal = total / 1.16
