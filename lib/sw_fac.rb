@@ -15,14 +15,4 @@ require 'nokogiri'
 
 module SwFac
 
-
-  # Api = 'jjjjjjjjjjj'
-
-  # @api_base = 'hola mundo'
-  
-  # class << self
-  #   attr_accessor :api_base
-
-  #   # attr_reader :max_network_retry_delay, :initial_network_retry_delay
-  # end
 end

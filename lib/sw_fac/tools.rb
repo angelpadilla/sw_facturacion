@@ -33,6 +33,9 @@ module SwFac
 		def valida_rfc(rfc)
 			# Servicio para identificar que los RFC (emisores y receptores) que intervienen en el proceso sean válidos, 
 			# es decir que estén en la LCO (Lista de Contribuyentes con Obligación ante el SAT).
+			#
+			# Parameters:
+			#   rfc: (String)
 
 			url = URI("#{SwFac::UrlProduction}lrfc/#{rfc}")
 			http = Net::HTTP.new(url.host, url.port)
@@ -65,6 +68,9 @@ module SwFac
 
 		def consulta_no_certificado(no_certificado)
 			# Servicio para validar el numero de certificado 
+			#
+			# Parameters:
+			#   no_certificado: (String)
 
 			url = URI("#{SwFac::UrlProduction}lco/#{no_certificado}")
 			http = Net::HTTP.new(url.host, url.port)
