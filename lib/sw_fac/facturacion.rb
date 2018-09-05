@@ -1,6 +1,6 @@
 
 module SwFac
-  class Facturacion < Config
+  class Facturacion < Tools
 
   	def comp_pago(params={})
   		# Sample params

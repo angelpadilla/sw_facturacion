@@ -1,7 +1,7 @@
 require "sw_fac/version"
 require "sw_fac/config"
-require "sw_fac/facturacion"
 require "sw_fac/tools"
+require "sw_fac/facturacion"
 
 require 'openssl'
 require 'net/http'
