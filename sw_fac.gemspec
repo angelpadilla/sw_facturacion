@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["angelpadillam@gmail.com"]
 
   spec.summary       = %q{Gem used to fetch the Smarter Web API, used in mfactura.ml}
-  # spec.description   = %q{}
+  spec.description   = %q{Gem used to fetch the Smarter Web API}
   spec.homepage      = "https://bitbucket.org/padilla_mz/sw_factura/src/master/"
   spec.license       = "MIT"
 
