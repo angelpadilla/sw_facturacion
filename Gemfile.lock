@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sw_fac (0.1.0)
+    sw_fac (0.3.0)
       nokogiri (= 1.8.2)
 
 GEM
@@ -23,4 +23,4 @@ DEPENDENCIES
   sw_fac!
 
 BUNDLED WITH
-   1.16.2
+   1.16.3

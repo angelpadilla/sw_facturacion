@@ -400,6 +400,7 @@ module SwFac
   		# 	receptor_razon: 'Car zone',
   		# 	receptor_rfc: '',
   		# 	uso_cfdi: 'G03',
+  		#   time: "%Y-%m-%dT%H:%M:%S",
   		# 	line_items: [
   		# 		{
   		# 			clave_prod_serv: '78181500',
@@ -421,7 +422,7 @@ module SwFac
 
       uri = @production ? URI("#{SwFac::UrlProduction}cfdi33/stamp/customv1/b64") : URI("#{SwFac::UrlDev}cfdi33/stamp/customv1/b64")
   		token = @production ? @production_token : @dev_token
-  		time = Time.now
+  		time = params.fetch(:time, (Time.now).strftime("%Y-%m-%dT%H:%M:%S"))
 
     	xml = Nokogiri::XML(SwFac::DocBase)
 	    comprobante = xml.at_xpath("//cfdi:Comprobante")

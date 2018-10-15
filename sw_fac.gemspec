@@ -9,25 +9,13 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Angel Padilla"]
   spec.email         = ["angelpadillam@gmail.com"]
 
-  spec.summary       = %q{Gem used to fetch the Smarter Web API, used in mfactura.ml}
-  spec.description   = %q{Gem used to fetch the Smarter Web API}
-  spec.homepage      = "https://bitbucket.org/padilla_mz/sw_factura/src/master/"
+  spec.summary       = %q{Gem used to fetch the Smarter Web API}
+  spec.description   = %q{Gem used to fetch the Smarter Web API for the mexican billing system (SAT), this gem was builted and is currently used by the team at www.mfactura.ml}
+  spec.homepage      = "https://github.com/angelpadilla/sw_facturacion"
   spec.license       = "MIT"
 
-  # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
-  # to allow pushing to a single host or delete this section to allow pushing to any host.
-  # spec.metadata["allowed_push_host"] = "https://rubygems.org/"
-  spec.metadata['allowed_push_host'] = "http://rubygems.org"
-  # if spec.respond_to?(:metadata)
-  # else
-  #   raise "RubyGems 2.0 or newer is required to protect against " \
-  #     "public gem pushes."
-  # end
-
-  # Specify which files should be added to the gem when it is released.
-  # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
+  spec.metadata['allowed_push_host'] = "https://rubygems.org"
   spec.files         = ["README.md"] + Dir["lib/**/*.*"]
-  # spec.files         = `git ls-files`.split($/)
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]

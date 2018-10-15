@@ -1,8 +1,7 @@
-# SwFac
+# sw_fac 0.3.0
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/sw_fac`. To experiment with that code, run `bin/console` for an interactive prompt.
+This is a ruby library that helps to interact with the Smarted Web API and the mexican billing system (SAT).
 
-TODO: Delete this and the text above, and describe your gem
 
 ## Installation
 
@@ -22,17 +21,35 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Initialize a new object with your config arguments
+
+```ruby
+# Required arguments
+production_token = (String) # your production token
+development_token = (String) # your dev token
+rfc = (String) # your company rfc
+razon_social = (String) # your company name
+regimen = (String) # example 612
+path_to_key = (String) # the path where the 'example.key' is
+key_passphrase = (String) # password for the .key file
+path_to_cer = (String) # the path where the 'example.cer' is
+
+# Optional arguments
+production = (Boolean) # environment, optional, default is -false-
+
+# The object
+obj = SwFac::Facturacion.new(production_token, development_token, rfc, razon_social, regimen, path_to_key, key_passphrase, path_to_cer, production) 
+```
 
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+To install this gem onto your local machine, run `bundle exec rake install`.
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/sw_fac.
+Bug reports and pull requests are welcome on GitHub at https://github.com/angelpadilla/sw_facturacion.
 
 ## License
 
