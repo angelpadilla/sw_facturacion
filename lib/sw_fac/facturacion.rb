@@ -26,7 +26,8 @@ module SwFac
 
   		uri = @production ? URI("#{SwFac::UrlProduction}cfdi33/stamp/customv1/b64") : URI("#{SwFac::UrlDev}cfdi33/stamp/customv1/b64")
   		token = @production ? @production_token : @dev_token
-  		time = params.fetch(:time, Time.now)
+  		time = params.fetch(:time, (Time.now).strftime("%Y-%m-%dT%H:%M:%S"))
+
 
   		base_doc = %(<?xml version="1.0" encoding="UTF-8"?>
           <cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pago10="http://www.sat.gob.mx/Pagos" xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd http://www.sat.gob.mx/Pagos http://www.sat.gob.mx/sitio_internet/cfd/Pagos/Pagos10.xsd" Version="3.3" SubTotal="0" Total="0" Moneda="XXX" TipoDeComprobante="P" >
@@ -50,7 +51,7 @@ module SwFac
       comprobante = xml.at_xpath("//cfdi:Comprobante")
       comprobante['Serie'] = 'P'
       comprobante['Folio'] = params[:venta_folio].to_s
-      comprobante['Fecha'] = time.strftime("%Y-%m-%dT%H:%M:%S")
+      comprobante['Fecha'] = time
       comprobante['LugarExpedicion'] = params[:cp].to_s
       comprobante['NoCertificado'] = @serial
       comprobante['Certificado'] = @cadena
@@ -63,7 +64,7 @@ module SwFac
       receptor['Rfc'] = params[:receptor_rfc].to_s
 
       child_pago = xml.at_xpath("//pago10:Pago")
-      child_pago['FechaPago'] = time.strftime("%Y-%m-%dT%H:%M:%S")
+      child_pago['FechaPago'] = time
       child_pago['FormaDePagoP'] = params[:forma_pago].to_s
       child_pago['MonedaP'] = params.fetch(:moneda, 'MXN')
       child_pago['Monto'] = params[:total].round(2).to_s
@@ -198,10 +199,11 @@ module SwFac
 
   		uri = @production ? URI("#{SwFac::UrlProduction}cfdi33/stamp/customv1/b64") : URI("#{SwFac::UrlDev}cfdi33/stamp/customv1/b64")
   		token = @production ? @production_token : @dev_token
-  		time = params.fetch(:time, Time.now)
+  		time = params.fetch(:time, (Time.now).strftime("%Y-%m-%dT%H:%M:%S"))
+
 
   		base_doc = %(<?xml version="1.0" encoding="utf-8"?>
-				<cfdi:Comprobante xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd" Version="3.3" Serie="#{params.fetch(:series, 'N')}" Folio="#{params[:folio]}" Fecha="#{time.strftime("%Y-%m-%dT%H:%M:%S")}" FormaPago="99" NoCertificado="#{@serial}" Certificado="#{@cadena}" SubTotal="#{subtotal.round(2)}" Moneda="#{params.fetch(:moneda, 'MXN')}" Total="#{total.round(2)}" TipoDeComprobante="E" MetodoPago="PUE" LugarExpedicion="#{params[:cp]}" xmlns:cfdi="http://www.sat.gob.mx/cfd/3">
+				<cfdi:Comprobante xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd" Version="3.3" Serie="#{params.fetch(:series, 'N')}" Folio="#{params[:folio]}" Fecha="#{time}" FormaPago="99" NoCertificado="#{@serial}" Certificado="#{@cadena}" SubTotal="#{subtotal.round(2)}" Moneda="#{params.fetch(:moneda, 'MXN')}" Total="#{total.round(2)}" TipoDeComprobante="E" MetodoPago="PUE" LugarExpedicion="#{params[:cp]}" xmlns:cfdi="http://www.sat.gob.mx/cfd/3">
 					<cfdi:CfdiRelacionados TipoRelacion="01">
 						<cfdi:CfdiRelacionado UUID="#{params[:uuid_relacionado]}" />
 					</cfdi:CfdiRelacionados>
@@ -334,7 +336,8 @@ module SwFac
 
       uri = @production ? URI("#{SwFac::UrlProduction}cfdi33/cancel/csd") : URI("#{SwFac::UrlDev}cfdi33/cancel/csd")
       token = @production ? @production_token : @dev_token
-  		time = Time.now
+  		# time = params.fetch(:time, (Time.now).strftime("%Y-%m-%dT%H:%M:%S"))
+
 
   		request = Net::HTTP::Post.new(uri)
       request["Authorization"] = "bearer #{token}"
@@ -430,7 +433,7 @@ module SwFac
 	    comprobante['TipoDeComprobante'] = 'I'
 	    comprobante['Serie'] = params.fetch(:series, 'FA').to_s
 	    comprobante['Folio'] = params.fetch(:folio).to_s
-	    comprobante['Fecha'] = time.strftime("%Y-%m-%dT%H:%M:%S")
+	    comprobante['Fecha'] = time
 	    comprobante['FormaPago'] = params.fetch(:forma_pago, '01')
 	    comprobante['MetodoPago'] = params.fetch(:metodo_pago, 'PUE')
 	    comprobante['LugarExpedicion'] = params.fetch(:cp, '')
