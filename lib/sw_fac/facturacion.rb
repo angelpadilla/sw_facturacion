@@ -433,7 +433,7 @@ module SwFac
 	    comprobante['TipoDeComprobante'] = 'I'
 	    comprobante['Serie'] = params.fetch(:series, 'FA').to_s
 	    comprobante['Folio'] = params.fetch(:folio).to_s
-	    comprobante['Fecha'] = time
+	    comprobante['Fecha'] = time.to_s
 	    comprobante['FormaPago'] = params.fetch(:forma_pago, '01')
 	    comprobante['MetodoPago'] = params.fetch(:metodo_pago, 'PUE')
 	    comprobante['LugarExpedicion'] = params.fetch(:cp, '')
@@ -453,6 +453,9 @@ module SwFac
 	    impuestos = xml.at_xpath("//cfdi:Impuestos")
 	    traslado = xml.at_xpath("//cfdi:Traslado")
 
+	    puts '--- sw_fac time -----'
+	    puts time
+	    puts '--------'
 
 	    conceptos = xml.at_xpath("//cfdi:Conceptos")
 

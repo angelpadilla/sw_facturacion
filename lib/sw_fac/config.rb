@@ -34,10 +34,10 @@ module SwFac
       number = (response[d_begin..-1]).chomp
       final_serial = ""
 
-      number.each_char do |s|
-        unless (s == "3")
-          final_serial << s
-        end
+      number.each_char.with_index do |s, index|
+      	if (index + 1).even?
+		  		final_serial << s
+		  	end
       end
       @serial = final_serial
     end
