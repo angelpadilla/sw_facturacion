@@ -469,14 +469,24 @@ module SwFac
       	descuento = line.fetch(:descuento, 0.00).to_f
 
 	      if line[:tax_included] == true
-      		unitario = ((line[:valor_unitario]).to_f - descuento) / 1.16
+	      	if line[:tipo_impuesto] == '004'
+	      		unitario = (line[:valor_unitario].to_f) - descuento
+	      	else
+      			unitario = ((line[:valor_unitario]).to_f - descuento) / 1.16
+	      	end
 	      else
 	      	unitario = (line[:valor_unitario].to_f) - descuento
 	      end
 
       	cantidad = line[:cantidad].to_f
 	      total_line = cantidad * unitario
-    		total_acumulator = cantidad * unitario * 1.16
+
+	      if line[:tipo_impuesto] == '004'
+    			total_acumulator = cantidad * unitario
+	      else
+    			total_acumulator = cantidad * unitario * 1.16
+	      end
+	      
       	importe_iva = total_acumulator - total_line 
 
 	      subtotal += total_line 
@@ -499,9 +509,16 @@ module SwFac
 	      child_traslados = Nokogiri::XML::Node.new "cfdi:Traslados", xml
 	      child_traslado = Nokogiri::XML::Node.new "cfdi:Traslado", xml
 	      child_traslado['Base'] = total_line.round(6).to_s
-	      child_traslado['Impuesto'] = line.fetch(:tipo_impuesto, '002')
+	      child_traslado['Impuesto'] = '002'
 	      child_traslado['TipoFactor'] = "Tasa"
-	      child_traslado['TasaOCuota'] = '0.160000'
+
+	      if line[:tipo_impuesto] == '004'
+	      	child_traslado['TasaOCuota'] = '0.000000'
+	      else 
+	      	child_traslado['TasaOCuota'] = '0.160000'
+	      end
+
+
 	      child_traslado['Importe'] = importe_iva.round(6).to_s
 	    
 	      # Joining all up
