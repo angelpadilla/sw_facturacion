@@ -54,3 +54,8 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/angelp
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+
+## Support on Beerpay
+Hey dude! Help me out for a couple of :beers:!
+
+[![Beerpay](https://beerpay.io/angelpadilla/sw_facturacion/badge.svg?style=beer-square)](https://beerpay.io/angelpadilla/sw_facturacion)  [![Beerpay](https://beerpay.io/angelpadilla/sw_facturacion/make-wish.svg?style=flat-square)](https://beerpay.io/angelpadilla/sw_facturacion?focus=wish)
