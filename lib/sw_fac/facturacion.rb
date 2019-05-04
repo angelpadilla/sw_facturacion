@@ -9,9 +9,9 @@ module SwFac
   		# 	venta_folio: '',
   		#   cp: '',
   		# 	receptor_razon: 'Car zone',
-				# receptor_rfc: 'XAXX010101000',
-				# forma_pago: '01',
-				# total: 100.00,
+			#   receptor_rfc: 'XAXX010101000',
+			#   forma_pago: '01',
+			#   total: 100.00,
   		# 	time: '',
   		# 	modena: '',
   		# 	line_items: [
@@ -22,7 +22,17 @@ module SwFac
   		# 	]
   		# }
 
-  		raise 'Error - la suma de los complementos de pago es mayor al total reportado' if (params[:line_items].inject(0) {|sum, x| sum + x[:monto].to_f }) > params[:total].to_f
+  		puts " Datos --------"
+  		puts "-- Total: #{params[:total]}"
+  		puts "--- Line items: "
+  		params[:line_items].each do |line|
+  			puts "--- #{line[:monto]}"
+  		end
+  		puts "-- Suma de line_items: #{params[:line_items].inject(0) {|sum, x| sum + x[:monto].to_f.round(2) }}"
+
+  		if (params[:line_items].inject(0) {|sum, x| sum + x[:monto].to_f }) > params[:total].to_f.round(2)
+  			raise 'Error - la suma de los complementos de pago es mayor al total reportado' 
+  		end
 
   		uri = @production ? URI("#{SwFac::UrlProduction}cfdi33/stamp/customv1/b64") : URI("#{SwFac::UrlDev}cfdi33/stamp/customv1/b64")
   		token = @production ? @production_token : @dev_token
