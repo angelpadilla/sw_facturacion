@@ -60,7 +60,17 @@ module SwFac
   UrlProduction = "http://services.sw.com.mx/"
   UrlDev = "http://services.test.sw.com.mx/"
 
-  DocBase = %(<?xml version="1.0" encoding="utf-8"?><cfdi:Comprobante xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd" Version="3.3" xmlns:cfdi="http://www.sat.gob.mx/cfd/3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><cfdi:Emisor /><cfdi:Receptor /><cfdi:Conceptos></cfdi:Conceptos><cfdi:Impuestos><cfdi:Traslados><cfdi:Traslado Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" /></cfdi:Traslados></cfdi:Impuestos></cfdi:Comprobante>)
+  DocBase = %(<?xml version="1.0" encoding="utf-8"?><cfdi:Comprobante xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd" Version="3.3" xmlns:cfdi="http://www.sat.gob.mx/cfd/3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><cfdi:Emisor />
+  <cfdi:Receptor /><cfdi:Conceptos></cfdi:Conceptos>
+  <cfdi:Impuestos>
+    <cfdi:Retenciones TotalImpuestosRetenidos="0.00">
+      <cfdi:Retencion Importe="0.00" Impuesto="002"/>
+    </cfdi:Retenciones>
+    <cfdi:Traslados>
+      <cfdi:Traslado Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" />
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+  </cfdi:Comprobante>)
 
   Doc_concepto = %(<cfdi:Concepto ClaveProdServ="25172504" NoIdentificacion="COST37125R17" Cantidad="1" ClaveUnidad="H87" Unidad="Pieza" Descripcion="Producto de prueba" ValorUnitario="1000.00" Importe="1000.00"><cfdi:Impuestos><cfdi:Traslados><cfdi:Traslado Base="1000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="160.00" /></cfdi:Traslados></cfdi:Impuestos></cfdi:Concepto>)
 

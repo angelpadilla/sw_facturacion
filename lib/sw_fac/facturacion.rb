@@ -414,6 +414,7 @@ module SwFac
   		# 	receptor_rfc: '',
   		# 	uso_cfdi: 'G03',
   		#   time: "%Y-%m-%dT%H:%M:%S",
+      #   retencion_iva: false, <------ ######
   		# 	line_items: [
   		# 		{
   		# 			clave_prod_serv: '78181500',
@@ -462,6 +463,7 @@ module SwFac
 
 	    impuestos = xml.at_xpath("//cfdi:Impuestos")
 	    traslado = xml.at_xpath("//cfdi:Traslado")
+
 
 	    puts '--- sw_fac time -----'
 	    puts time
@@ -540,16 +542,30 @@ module SwFac
 
 	    end
 
-	    puts '------ Line -----'
-	    puts "Total suma = #{suma_total}"
-      puts "SubTotal suma = #{subtotal}"
-      puts "Suma iva = #{suma_iva}"
+	    # puts '------ Line -----'
+	    # puts "Total suma = #{suma_total}"
+     #  puts "SubTotal suma = #{subtotal}"
+     #  puts "Suma iva = #{suma_iva}"
 
-	    comprobante['SubTotal'] = subtotal.round(2).to_s
- 			comprobante['Total'] = suma_total.round(2).to_s
+
 	    comprobante['Moneda'] = params.fetch(:moneda, 'MXN')
+	    comprobante['SubTotal'] = subtotal.round(2).to_s
+      impuestos['TotalImpuestosTrasladados'] = suma_iva.round(2).to_s
 
-	    impuestos['TotalImpuestosTrasladados'] = suma_iva.round(2).to_s
+
+      ### en caso de retencion de IVA
+      if params[:retencion_iva]
+        retencion = xml.at_xpath("//cfdi:Retencion")
+        retencion['Importe'] = suma_iva.round(2).to_s
+
+        comprobante['Total'] = subtotal.round(2).to_s
+        impuestos['TotalImpuestosRetenidos'] = suma_iva.round(2).to_s
+      else
+        comprobante['Total'] = suma_total.round(2).to_s
+      end
+	    
+ 			# comprobante['Total'] = suma_total.round(2).to_s
+
 	    traslado['Importe'] = suma_iva.round(2).to_s
 
 	    path = File.join(File.dirname(__FILE__), *%w[.. tmp])
