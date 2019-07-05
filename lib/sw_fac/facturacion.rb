@@ -555,11 +555,19 @@ module SwFac
 
       ### en caso de retencion de IVA
       if params[:retencion_iva]
-        retencion = xml.at_xpath("//cfdi:Retencion")
-        retencion['Importe'] = suma_iva.round(2).to_s
+        retencion = Nokogiri::XML::Node.new "cfdi:Retenciones", xml
+        retencion_child = Nokogiri::XML::Node.new "cfdi:Retencion", xml
+
+        # retencion = xml.at_xpath("//cfdi:Retencion")
+        retencion_child['Impuesto'] = "002"
+        retencion_child['Importe'] = suma_iva.round(2).to_s
 
         comprobante['Total'] = subtotal.round(2).to_s
         impuestos['TotalImpuestosRetenidos'] = suma_iva.round(2).to_s
+
+
+        retencion.add_child(retencion_child)
+        impuestos.add_child(retencion)
       else
         comprobante['Total'] = suma_total.round(2).to_s
       end
@@ -585,9 +593,9 @@ module SwFac
 	    File.delete("#{xml_path}")
 	    File.delete("#{key_pem_url}")
 
-	    # puts '---- comprobante sin timbrar------'
-	    # puts xml.to_xml
-	    # puts '-------------------------'
+	    puts '---- SW GEM comprobante sin timbrar ------'
+	    puts xml.to_xml
+	    puts '-------------------------'
 
 	    base64_xml = Base64.encode64(xml.to_xml)
 	    request = Net::HTTP::Post.new(uri)
