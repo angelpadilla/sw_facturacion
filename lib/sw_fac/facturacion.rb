@@ -513,6 +513,7 @@ module SwFac
 	      suma_iva += importe_iva
 	      suma_total += total_acumulator 
 
+        puts "--- 01"
         ## calculando retencion de IVA en caso de tener
         if ret_iva > 0
           if ret_iva == 6
@@ -523,7 +524,7 @@ module SwFac
         else
           importe_ret_linea = 0
         end
-        puts "--- 01"
+        puts "--- 02"
         suma_ret += importe_ret_linea
 	      
 
@@ -617,7 +618,7 @@ module SwFac
         comprobante['Total'] = suma_total.round(2).to_s
       end
 
-      
+
       ## filling traslado info
       traslado_child = Nokogiri::XML::Node.new "cfdi:Traslado", xml
       traslado_child['Impuesto'] = '002'
