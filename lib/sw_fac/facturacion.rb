@@ -414,7 +414,6 @@ module SwFac
   		# 	receptor_rfc: '',
   		# 	uso_cfdi: 'G03',
   		#   time: "%Y-%m-%dT%H:%M:%S",
-      #   retencion_iva: false, <------ ######
   		# 	line_items: [
   		# 		{
   		# 			clave_prod_serv: '78181500',
@@ -426,8 +425,8 @@ module SwFac
 	   #  			valor_unitario: 100.00,
 	   #  			descuento: 0.00,
 	   #  			tax_included: true,
+      #       retencion_iva: 0, 6, 16
 	   #  			# Optional parameters
-	   #  			# tipo_impuesto: '002'
   		# 		},
   		# 	]
 
@@ -461,8 +460,10 @@ module SwFac
 	    receptor['Rfc'] = params.fetch(:receptor_rfc, '')
 	    receptor['UsoCFDI'] = params.fetch(:uso_cfdi, 'G03')
 
+      # retencion_iva = params.fetch(:retencion_iva, 0)
+
 	    impuestos = xml.at_xpath("//cfdi:Impuestos")
-	    traslado = xml.at_xpath("//cfdi:Traslado")
+      traslados = Nokogiri::XML::Node.new "cfdi:Traslados", xml
 
 
 	    puts '--- sw_fac time -----'
@@ -476,36 +477,57 @@ module SwFac
 	    suma_total = 0.00
 	    subtotal = 0.00
 	    suma_iva = 0.00
+      suma_ret = 0.00
+
+
 
 	    line_items.each do |line|
-      	descuento = line.fetch(:descuento, 0.00).to_f
+        ret_iva = line.fetch(:retencion_iva, 0)
+        puts ret_iva
 
+
+        ## revisando si la linea tiene iva 0
 	      if line[:tax_included] == true
-	      	if line[:tipo_impuesto] == '004'
-	      		unitario = (line[:valor_unitario].to_f) - descuento
-	      	else
-      			unitario = ((line[:valor_unitario]).to_f - descuento) / 1.16
-	      	end
+	      	# if line[:tipo_impuesto] == '004'
+	      	# 	valor_unitario = (line[:valor_unitario].to_f)
+	      	# else
+	      	# end
+      		valor_unitario = ((line[:valor_unitario]).to_f) / 1.16
 	      else
-	      	unitario = (line[:valor_unitario].to_f) - descuento
+	      	valor_unitario = (line[:valor_unitario].to_f)
 	      end
 
       	cantidad = line[:cantidad].to_f
-	      total_line = cantidad * unitario
+	      total_line = cantidad * valor_unitario
 
-	      if line[:tipo_impuesto] == '004'
-    			total_acumulator = cantidad * unitario
-	      else
-    			total_acumulator = cantidad * unitario * 1.16
-	      end
-	      
+	      # if line[:tipo_impuesto] == '004'
+    			# total_acumulator = cantidad * valor_unitario
+	      # else
+    			# total_acumulator = cantidad * valor_unitario * 1.16
+	      # end
+        
+        total_acumulator = cantidad * valor_unitario * 1.16
+
       	importe_iva = total_acumulator - total_line 
-
 	      subtotal += total_line 
 	      suma_iva += importe_iva
 	      suma_total += total_acumulator 
 
+        ## calculando retencion de IVA en caso de tener
+        if ret_iva > 0
+          if ret_iva == 6
+            importe_ret_linea = (total_line * 1.06) - total_line
+          elsif ret_iva == 16
+            importe_ret_linea = importe_iva
+          end
+        else
+          importe_ret_linea = 0
+        end
+        puts "--- 01"
+        suma_ret += importe_ret_linea
+	      
 
+        ## Creando y poblando CFDI:CONCEPTO
 	      child_concepto = Nokogiri::XML::Node.new "cfdi:Concepto", xml
 	      child_concepto['ClaveProdServ'] = line[:clave_prod_serv].to_s
 	      child_concepto['NoIdentificacion'] = line[:sku].to_s 
@@ -513,68 +535,107 @@ module SwFac
 	      child_concepto['Unidad'] = line[:unidad].to_s
 	      child_concepto['Descripcion'] = line[:descripcion].to_s
 	      child_concepto['Cantidad'] = cantidad.to_s
-	      child_concepto['ValorUnitario'] = unitario.round(6).to_s
-	      child_concepto['Importe'] = total_line.round(6).to_s
+	      child_concepto['ValorUnitario'] = valor_unitario.round(2).to_s
+	      child_concepto['Importe'] = total_line.round(2).to_s
 	      # child_concepto['Descuento'] = line.fetch(:descuento, 0.00).round(6).to_s
 
+
+        ## Creando cdfi:Impuestos para cada linea
 	      child_impuestos = Nokogiri::XML::Node.new "cfdi:Impuestos", xml
+
+        ## Creando cfdi:Traslados para cada linea
 	      child_traslados = Nokogiri::XML::Node.new "cfdi:Traslados", xml
 	      child_traslado = Nokogiri::XML::Node.new "cfdi:Traslado", xml
-	      child_traslado['Base'] = total_line.round(6).to_s
+	      child_traslado['Base'] = total_line.round(2).to_s
 	      child_traslado['Impuesto'] = '002'
 	      child_traslado['TipoFactor'] = "Tasa"
+	      child_traslado['TasaOCuota'] = '0.160000'
+	      child_traslado['Importe'] = importe_iva.round(2).to_s
 
-	      if line[:tipo_impuesto] == '004'
-	      	child_traslado['TasaOCuota'] = '0.000000'
-	      else 
-	      	child_traslado['TasaOCuota'] = '0.160000'
-	      end
+	      # if line[:tipo_impuesto] == '004'
+	      # 	child_traslado['TasaOCuota'] = '0.000000'
+	      # else 
+	      # end
 
 
-	      child_traslado['Importe'] = importe_iva.round(6).to_s
-	    
 	      # Joining all up
 	      child_traslados.add_child(child_traslado)
 	      child_impuestos.add_child(child_traslados)
 	      child_concepto.add_child(child_impuestos)
-
 	      conceptos.add_child(child_concepto)
+	     
+        ## Creando cfdi:Retenciones para cada linea en caso de tener
+        if ret_iva > 0
+          child_retenciones = Nokogiri::XML::Node.new "cfdi:Retenciones", xml
+          child_retencion = Nokogiri::XML::Node.new "cfdi:Retencion", xml
+          child_retencion['Base'] = total_line.round(2).to_s
+          child_retencion['Impuesto'] = '002'
+          child_retencion['TipoFactor'] = "Tasa"
+
+          if ret_iva == 6
+            child_retencion['TasaOCuota'] = "0.060000"
+          elsif ret_iva == 16
+            child_retencion['TasaOCuota'] = "0.160000"
+          end
+
+          child_retencion['Importe'] = importe_ret_linea.round(2).to_s
+
+          child_retenciones.add_child(child_retencion)
+          child_impuestos.add_child(child_retenciones)
+        end
+
+
 
 	    end
 
-	    # puts '------ Line -----'
-	    # puts "Total suma = #{suma_total}"
-     #  puts "SubTotal suma = #{subtotal}"
-     #  puts "Suma iva = #{suma_iva}"
-
+	    puts '------ Totales -----'
+	    puts "Total suma = #{suma_total.round(2)}"
+      puts "SubTotal suma = #{subtotal.round(2)}"
+      puts "Suma iva = #{suma_iva.round(2)}"
+      puts "Suma restenciones = #{suma_ret.round(2)}"
 
 	    comprobante['Moneda'] = params.fetch(:moneda, 'MXN')
 	    comprobante['SubTotal'] = subtotal.round(2).to_s
+
+
+      ## Poblanco cfdi:Impuestos
+      impuestos['TotalImpuestosRetenidos'] = suma_ret.round(2).to_s if suma_ret > 0
       impuestos['TotalImpuestosTrasladados'] = suma_iva.round(2).to_s
 
-
-      ### en caso de retencion de IVA
-      if params[:retencion_iva]
-        retencion = Nokogiri::XML::Node.new "cfdi:Retenciones", xml
+      ## filling default retencion info
+      if suma_ret > 0
+        retenciones = Nokogiri::XML::Node.new "cfdi:Retenciones", xml
         retencion_child = Nokogiri::XML::Node.new "cfdi:Retencion", xml
-
-        # retencion = xml.at_xpath("//cfdi:Retencion")
         retencion_child['Impuesto'] = "002"
-        retencion_child['Importe'] = suma_iva.round(2).to_s
+        retencion_child['Importe'] = suma_ret.round(2).to_s
+        # retencion_child['TipoFactor'] = "Tasa"
 
-        comprobante['Total'] = subtotal.round(2).to_s
-        impuestos['TotalImpuestosRetenidos'] = suma_iva.round(2).to_s
-
-
-        retencion.add_child(retencion_child)
-        impuestos.add_child(retencion)
+        retenciones.add_child(retencion_child)
+        impuestos.add_child(retenciones)
+        comprobante['Total'] = (suma_total - suma_ret).round(2).to_s
       else
         comprobante['Total'] = suma_total.round(2).to_s
       end
-	    
- 			# comprobante['Total'] = suma_total.round(2).to_s
 
-	    traslado['Importe'] = suma_iva.round(2).to_s
+      
+      ## filling traslado info
+      traslado_child = Nokogiri::XML::Node.new "cfdi:Traslado", xml
+      traslado_child['Impuesto'] = '002'
+      traslado_child['TipoFactor'] = 'Tasa'
+      traslado_child['TasaOCuota'] = '0.160000'
+      traslado_child['Importe'] = suma_iva.round(2).to_s
+      traslados.add_child(traslado_child)
+      impuestos.add_child(traslados)
+
+
+
+      # puts '------ Totales -----'
+      # puts "Total suma = #{comprobante['Total']}"
+      # puts "SubTotal suma = #{subtotal}"
+      # puts "Suma iva = #{suma_iva}"
+      # puts "Suma retenciones = #{impuestos['TotalImpuestosRetenidos']}" if suma_ret > 0
+
+
 
 	    path = File.join(File.dirname(__FILE__), *%w[.. tmp])
 	    id = SecureRandom.hex
