@@ -536,8 +536,8 @@ module SwFac
 	      child_concepto['Unidad'] = line[:unidad].to_s
 	      child_concepto['Descripcion'] = line[:descripcion].to_s
 	      child_concepto['Cantidad'] = cantidad.to_s
-	      child_concepto['ValorUnitario'] = valor_unitario.round(2).to_s
-	      child_concepto['Importe'] = total_line.round(2).to_s
+	      child_concepto['ValorUnitario'] = valor_unitario.round(4).to_s
+	      child_concepto['Importe'] = total_line.round(4).to_s
 	      # child_concepto['Descuento'] = line.fetch(:descuento, 0.00).round(6).to_s
 
 
@@ -547,11 +547,11 @@ module SwFac
         ## Creando cfdi:Traslados para cada linea
 	      child_traslados = Nokogiri::XML::Node.new "cfdi:Traslados", xml
 	      child_traslado = Nokogiri::XML::Node.new "cfdi:Traslado", xml
-	      child_traslado['Base'] = total_line.round(2).to_s
+	      child_traslado['Base'] = total_line.round(4).to_s
 	      child_traslado['Impuesto'] = '002'
 	      child_traslado['TipoFactor'] = "Tasa"
 	      child_traslado['TasaOCuota'] = '0.160000'
-	      child_traslado['Importe'] = importe_iva.round(2).to_s
+	      child_traslado['Importe'] = importe_iva.round(4).to_s
 
 	      # if line[:tipo_impuesto] == '004'
 	      # 	child_traslado['TasaOCuota'] = '0.000000'
@@ -569,7 +569,7 @@ module SwFac
         if ret_iva > 0
           child_retenciones = Nokogiri::XML::Node.new "cfdi:Retenciones", xml
           child_retencion = Nokogiri::XML::Node.new "cfdi:Retencion", xml
-          child_retencion['Base'] = total_line.round(2).to_s
+          child_retencion['Base'] = total_line.round(4).to_s
           child_retencion['Impuesto'] = '002'
           child_retencion['TipoFactor'] = "Tasa"
 
@@ -579,7 +579,7 @@ module SwFac
             child_retencion['TasaOCuota'] = "0.160000"
           end
 
-          child_retencion['Importe'] = importe_ret_linea.round(2).to_s
+          child_retencion['Importe'] = importe_ret_linea.round(4).to_s
 
           child_retenciones.add_child(child_retencion)
           child_impuestos.add_child(child_retenciones)
