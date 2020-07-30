@@ -79,7 +79,7 @@ module SwFac
       child_pago['MonedaP'] = params.fetch(:moneda, 'MXN')
       child_pago['Monto'] = params[:total].round(2).to_s
 
-      saldo_anterior = params[:total].to_f
+      saldo_anterior = params[:total].to_s
 
       params[:line_items].each_with_index do |line, index|
       	monto = line[:monto].to_f
@@ -89,9 +89,9 @@ module SwFac
         child_pago_relacionado['MetodoDePagoDR'] = 'PPD'
         child_pago_relacionado['NumParcialidad'] = (index + 1).to_s
 
-        child_pago_relacionado['ImpSaldoAnt'] = (saldo_anterior).to_s
+        child_pago_relacionado['ImpSaldoAnt'] = (saldo_anterior).round(2).to_s
         child_pago_relacionado['ImpPagado'] = monto.round(2).to_s
-        child_pago_relacionado['ImpSaldoInsoluto'] = (saldo_anterior - monto).to_s
+        child_pago_relacionado['ImpSaldoInsoluto'] = (saldo_anterior - monto).round(2).to_s
         saldo_anterior -= monto 
 
         child_pago.add_child(child_pago_relacionado)
