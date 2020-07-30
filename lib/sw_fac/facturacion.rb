@@ -79,7 +79,7 @@ module SwFac
       child_pago['MonedaP'] = params.fetch(:moneda, 'MXN')
       child_pago['Monto'] = params[:total].round(2).to_s
 
-      saldo_anterior = params[:total].to_s
+      saldo_anterior = params[:total]
 
       params[:line_items].each_with_index do |line, index|
       	monto = line[:monto].to_f
