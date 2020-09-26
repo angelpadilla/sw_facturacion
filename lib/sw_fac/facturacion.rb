@@ -30,9 +30,9 @@ module SwFac
 		end
 		lines_total = params[:line_items].inject(0) {|sum, x| sum + x[:monto].to_f}
 
-  		puts "-- Suma de line_items: #{lines_total}"
+  		puts "-- Suma de line_items: #{lines_total.round(2)}"
 
-  		if (lines_total > params[:total].to_f)
+  		if (lines_total.round(2) > params[:total].to_f)
   			raise 'Error SW - la suma de los complementos de pago es mayor al total reportado' 
   		end
 
