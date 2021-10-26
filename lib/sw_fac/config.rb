@@ -45,7 +45,9 @@ module SwFac
           final_serial << s
         end
       end
+
       @serial = final_serial
+      
     end
 
 

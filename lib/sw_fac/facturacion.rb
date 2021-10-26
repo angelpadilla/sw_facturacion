@@ -589,7 +589,7 @@ module SwFac
 
 
 			# ??? 
-			# end
+			end
 
 			puts '------ Totales -----'
 			puts "Total suma = #{suma_total.round(2)}"
@@ -735,6 +735,7 @@ module SwFac
 
 
 		end
+		
 
 	end
 
