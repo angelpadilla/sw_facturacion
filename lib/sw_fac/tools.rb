@@ -4,11 +4,11 @@ module SwFac
 		def consulta_saldo
 			# Servicio utilizado para consultar los timbres disponibles en el entorno productivo
 
-  		url_prod = URI("#{SwFac::UrlProduction}account/balance")
-  		http = Net::HTTP.new(url_prod.host, url_prod.port)
+			url_prod = URI("#{SwFac::UrlProduction}account/balance")
+			http = Net::HTTP.new(url_prod.host, url_prod.port)
 			request = Net::HTTP::Get.new(url_prod)
 			request["Authorization"] = "bearer #{@production_token}"
-	    request.content_type = "application/json"
+			request.content_type = "application/json"
 			request["Cache-Control"] = 'no-cache'
 
 			response_1 = http.request(request)
@@ -41,11 +41,11 @@ module SwFac
 			http = Net::HTTP.new(url.host, url.port)
 			request = Net::HTTP::Get.new(url)
 			request["Authorization"] = "bearer #{@production_token}"
-	    request.content_type = "application/json"
+	    	request.content_type = "application/json"
 			request["Cache-Control"] = 'no-cache'
-      request["Postman-Token"] = 'a663ff71-f97d-57c9-be0b-1b1cdc06871e'
+			request["Postman-Token"] = 'a663ff71-f97d-57c9-be0b-1b1cdc06871e'
 
-      pet = http.request(request)
+			pet = http.request(request)
 			parsed = JSON.parse(pet.body)
 			response = {}
 
@@ -76,11 +76,11 @@ module SwFac
 			http = Net::HTTP.new(url.host, url.port)
 			request = Net::HTTP::Get.new(url)
 			request["Authorization"] = "bearer #{@production_token}"
-	    request.content_type = "application/json"
+			request.content_type = "application/json"
 			request["Cache-Control"] = 'no-cache'
-      request["Postman-Token"] = 'e17ee551-7f7a-32a7-8fd8-6b53ea70e3c9'
+			request["Postman-Token"] = 'e17ee551-7f7a-32a7-8fd8-6b53ea70e3c9'
 
-      pet = http.request(request)
+			pet = http.request(request)
 			parsed = JSON.parse(pet.body)
 			response = {}
 

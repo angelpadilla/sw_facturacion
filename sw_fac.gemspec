@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["angelpadillam@gmail.com"]
 
   spec.summary       = %q{Gem used to fetch the Smarter Web API}
-  spec.description   = %q{Gem used to fetch the Smarter Web API for the mexican billing system (SAT), this gem was builted and is currently used by the team at www.mfactura.ml}
+  spec.description   = %q{Gem used to fetch the Smarter Web API for the mexican billing system (SAT), this gem was builted and is currently used by the team at mfactura.com}
   spec.homepage      = "https://github.com/angelpadilla/sw_facturacion"
   spec.license       = "MIT"
 

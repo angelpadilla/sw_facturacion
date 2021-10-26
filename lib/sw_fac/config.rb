@@ -4,6 +4,8 @@ module SwFac
     attr_reader :pem, :serial, :cadena, :key_pass, :pem_cadena
 
     def initialize(production_token, development_token, rfc, razon, regimen, doc_key_path, key_pass, doc_cer_path, production=false)
+		  puts "---- SwFacturacion:config:initialize"
+
       @production_token = production_token.to_s
       @dev_token = development_token.to_s
       @rfc = rfc.to_s
@@ -21,6 +23,8 @@ module SwFac
     end
 
     def key_to_pem
+      puts "---- SwFacturacion:config:key_to_pem"
+
       @pem = %x[openssl pkcs8 -inform DER -in #{@doc_key_path} -passin pass:#{@key_pass}]
       @pem_cadena = @pem.clone
       @pem_cadena.slice!("-----BEGIN PRIVATE KEY-----")
@@ -29,21 +33,25 @@ module SwFac
     end
 
     def serial_number
+      puts "---- SwFacturacion:config:serial_number"
+
       response = %x[openssl x509 -inform DER -in #{@doc_cer_path} -noout -serial]
       d_begin = response.index(/\d/)
       number = (response[d_begin..-1]).chomp
       final_serial = ""
 
       number.each_char.with_index do |s, index|
-      	if (index + 1).even?
-		  		final_serial << s
-		  	end
+        if (index + 1).even?
+          final_serial << s
+        end
       end
       @serial = final_serial
     end
 
 
     def cer_cadena
+      puts "---- SwFacturacion:config:cer_cadena"
+
       file = File.read(@doc_cer_path)
       text_certificate = OpenSSL::X509::Certificate.new(file)
       cert_string = text_certificate.to_s
