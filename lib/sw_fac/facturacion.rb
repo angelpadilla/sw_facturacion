@@ -341,6 +341,7 @@ module SwFac
 			# params = {
 			# 	uuid: '',
 			# 	rfc_emisor: '',
+			# 	motivo: '02',
 			# 	key_password: '', # optional
 			# 	cer_cadena: '', # optional
 			# 	key_pem: '' # optional
@@ -360,6 +361,7 @@ module SwFac
 			'uuid': params[:uuid],
 			"password": params.fetch(:key_password, @key_pass),
 			"rfc": params.fetch(:rfc_emisor, @rfc),
+			"motivo": '02',
 			"b64Cer": params.fetch(:cer_cadena, @cadena), 
 			"b64Key": params.fetch(:key_pem, @pem_cadena) 
 			})
