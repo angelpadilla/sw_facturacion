@@ -2,15 +2,17 @@ PATH
   remote: .
   specs:
     sw_fac (0.3.52)
-      nokogiri (= 1.10.9)
+      nokogiri (= 1.13.3)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    mini_portile2 (2.4.0)
+    mini_portile2 (2.8.0)
     minitest (5.11.3)
-    nokogiri (1.10.9)
-      mini_portile2 (~> 2.4.0)
+    nokogiri (1.13.3)
+      mini_portile2 (~> 2.8.0)
+      racc (~> 1.4)
+    racc (1.6.0)
     rake (10.5.0)
 
 PLATFORMS
