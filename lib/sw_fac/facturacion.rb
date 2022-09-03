@@ -38,7 +38,7 @@ module SwFac
 			end
 
 			unless params[:time_pago] and params[:time_pago].size > 0
-				raise "la fecha de timbrado debe de estar presente"
+				raise "Error SW - la fecha de timbrado debe de estar presente"
 			end
 
 
@@ -784,6 +784,207 @@ module SwFac
 
 
 
+		end
+
+		def timbra_doc_cero(params={})
+			puts "---- SwFacturacion:facturacion:timbra_doc_cero"
+			# params = {
+			# 	moneda: 'MXN',
+			# 	series: 'FA',
+			# 	folio: '003',
+			# 	forma_pago: '',
+			# 	metodo_pago: 'PUE',
+			# 	cp: '47180',
+			# 	receptor_razon: 'Car zone',
+			# 	receptor_rfc: '',
+			# 	uso_cfdi: 'G03',
+			#   time: "%Y-%m-%dT%H:%M:%S",
+			# 	line_items: [
+			# 		{
+			# 			clave_prod_serv: '78181500',
+			#  			clave_unidad: 'E48',
+			#  			unidad: 'Servicio',
+			#  			sku: 'serv001',
+			#  			cantidad: 1,
+			#  			descripcion: 'Servicio mano de obra',
+			#  			valor_unitario: 100.00,
+			#  			# Optional parameters
+			# 		},
+			# 	]
+
+			# }
+
+			uri = @production ? URI("#{SwFac::UrlProduction}cfdi33/stamp/customv1/b64") : URI("#{SwFac::UrlDev}cfdi33/stamp/customv1/b64")
+			token = @production ? @production_token : @dev_token
+			time = params.fetch(:time, (Time.now).strftime("%Y-%m-%dT%H:%M:%S"))
+
+			xml = Nokogiri::XML(SwFac::DocBaseCero)
+			comprobante = xml.at_xpath("//cfdi:Comprobante")
+			comprobante['TipoCambio'] = '1'
+			comprobante['TipoDeComprobante'] = 'I'
+			comprobante['Serie'] = params.fetch(:series, 'FA').to_s
+			comprobante['Folio'] = params.fetch(:folio, '1').to_s
+			comprobante['Fecha'] = time.to_s
+			comprobante['FormaPago'] = params.fetch(:forma_pago, '01')
+			comprobante['MetodoPago'] = params.fetch(:metodo_pago, 'PUE')
+			comprobante['LugarExpedicion'] = params.fetch(:cp, '55555')
+			comprobante['NoCertificado'] = @serial
+			comprobante['Certificado'] = @cadena
+
+			emisor = xml.at_xpath("//cfdi:Emisor")
+			emisor['Nombre'] = @razon
+			emisor['RegimenFiscal'] = @regimen_fiscal
+			emisor['Rfc'] = @rfc
+
+			receptor = xml.at_xpath("//cfdi:Receptor")
+			receptor['Nombre'] = params.fetch(:receptor_razon, '')
+			receptor['Rfc'] = params.fetch(:receptor_rfc, 'XAXX010101000')
+			receptor['UsoCFDI'] = params.fetch(:uso_cfdi, 'G03')
+
+
+			# impuestos = xml.at_xpath("//cfdi:Impuestos")
+			# traslados = Nokogiri::XML::Node.new "cfdi:Traslados", xml
+
+
+			puts '--- sw_fac time -----'
+			puts time
+			puts '--------'
+
+			conceptos = xml.at_xpath("//cfdi:Conceptos")
+
+			line_items = params[:line_items]
+
+			suma_total = 0.00
+
+			line_items.each do |line|
+				
+				valor_unitario = line[:valor_unitario].to_f
+				cantidad = line[:cantidad].to_f
+				total_line = cantidad * valor_unitario
+
+				suma_total += total_line 
+
+				## Creando y poblando CFDI:CONCEPTO
+				child_concepto = Nokogiri::XML::Node.new "cfdi:Concepto", xml
+				child_concepto['ClaveProdServ'] = line[:clave_prod_serv].to_s
+				child_concepto['NoIdentificacion'] = line[:sku].to_s 
+				child_concepto['ClaveUnidad'] = line[:clave_unidad].to_s
+				child_concepto['Unidad'] = line[:unidad].to_s
+				child_concepto['Descripcion'] = line[:descripcion].to_s
+				child_concepto['Cantidad'] = cantidad.to_s
+				child_concepto['ValorUnitario'] = valor_unitario.round(4).to_s
+				child_concepto['Importe'] = total_line.round(4).to_s
+
+
+				# Joining all up
+				conceptos.add_child(child_concepto)
+			
+
+			end
+
+			puts '------ Totales -----'
+			puts "Subtotal = #{suma_total}"
+			puts "Total = #{suma_total}"
+
+			comprobante['Moneda'] = params.fetch(:moneda, 'MXN')
+			comprobante['SubTotal'] = suma_total.round(2).to_s
+			comprobante['Total'] = suma_total.round(2).to_s
+
+
+
+			path = File.join(File.dirname(__FILE__), *%w[.. tmp])
+			id = SecureRandom.hex
+
+			FileUtils.mkdir_p(path) unless File.exist?(path)
+				File.write("#{path}/tmp_#{id}.xml", xml.to_xml)
+				xml_path = "#{path}/tmp_#{id}.xml"
+			cadena_path = File.join(File.dirname(__FILE__), *%w[.. cadena cadena33.xslt])
+
+			# puts File.read(cadena_path)
+			File.write("#{path}/pem_#{id}.pem", @pem)
+			key_pem_url = "#{path}/pem_#{id}.pem"
+			sello = %x[xsltproc #{cadena_path} #{xml_path} | openssl dgst -sha256 -sign #{key_pem_url} | openssl enc -base64 -A]
+			comprobante['Sello'] = sello
+
+			File.delete("#{xml_path}")
+			File.delete("#{key_pem_url}")
+
+			puts '---- SW GEM comprobante sin timbrar ------'
+			puts xml.to_xml
+			puts '-------------------------'
+
+			base64_xml = Base64.encode64(xml.to_xml)
+			request = Net::HTTP::Post.new(uri)
+			request.basic_auth(token, "")
+			request.content_type = "application/json"
+			request["cache-control"] = 'no-cache'
+			request.body = JSON.dump({
+				"credentials" => {
+					"id" => params.fetch(:folio).to_s,
+					"token" => token
+				},
+				"issuer" => {
+					"rfc" => emisor['Rfc']
+				},
+				"document" => {
+					"ref-id": params.fetch(:folio).to_s,
+					"certificate-number": comprobante['NoCertificado'],
+					"section": "all",
+					"format": "xml",
+					"template": "letter",
+					"type": "application/xml",
+					"content": base64_xml
+				}
+			})
+
+			req_options = {
+				use_ssl: false,
+			}
+
+			json_response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+				http.request(request)
+			end
+
+			puts "-- SW API reponse..."
+			puts "-- Response code: #{json_response.code} --"
+			puts "-- Response body: #{json_response.body} --"
+			puts "-- Response message: #{json_response.message} --"
+
+			response = JSON.parse(json_response.body)
+
+			if json_response.code == '200'
+				decoded_xml = Nokogiri::XML(Base64.decode64(response['content']))
+				timbre = decoded_xml.at_xpath("//cfdi:Complemento").children.first
+
+				response = {
+					status: 200,
+					message_error: '',
+					xml: decoded_xml.to_xml,
+					uuid: response['uuid'],
+					fecha_timbrado: timbre['FechaTimbrado'],
+					sello_cfd: timbre['SelloCFD'],
+					sello_sat: timbre['SelloSAT'],
+					no_certificado_sat: timbre['NoCertificadoSAT'],
+				}
+
+				return response
+			else
+
+				response ={
+					status: json_response.code,
+					message_error: "Error message: #{json_response.message}, #{response['message']} #{response['error_details']}",
+					xml: '',
+					uuid: '',
+					fecha_timbrado: '',
+					sello_cfd: '',
+					sello_sat: '',
+					no_certificado_sat: '',
+				}
+
+				return response
+			end
+
+			
 		end
 		
 

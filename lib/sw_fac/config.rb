@@ -25,7 +25,10 @@ module SwFac
     def key_to_pem
       puts "---- SwFacturacion:config:key_to_pem"
 
+      puts "-- 1"
       @pem = %x[openssl pkcs8 -inform DER -in #{@doc_key_path} -passin pass:#{@key_pass}]
+      # @pem = %x[openssl rsa -inform DER -in #{@doc_key_path} -passin pass:#{@key_pass}]
+      puts "-- 2"
       @pem_cadena = @pem.clone
       @pem_cadena.slice!("-----BEGIN PRIVATE KEY-----")
       @pem_cadena.slice!("-----END PRIVATE KEY-----")
@@ -73,6 +76,9 @@ module SwFac
   DocBase = %(<?xml version="1.0" encoding="utf-8"?><cfdi:Comprobante xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd" Version="3.3" xmlns:cfdi="http://www.sat.gob.mx/cfd/3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><cfdi:Emisor />
   <cfdi:Receptor /><cfdi:Conceptos></cfdi:Conceptos>
   <cfdi:Impuestos></cfdi:Impuestos></cfdi:Comprobante>)
+
+  DocBaseCero = %(<?xml version="1.0" encoding="utf-8"?><cfdi:Comprobante xsi:schemaLocation="http://www.sat.gob.mx/cfd/3 http://www.sat.gob.mx/sitio_internet/cfd/3/cfdv33.xsd" Version="3.3" xmlns:cfdi="http://www.sat.gob.mx/cfd/3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><cfdi:Emisor />
+  <cfdi:Receptor /><cfdi:Conceptos></cfdi:Conceptos></cfdi:Comprobante>)
 
   Doc_concepto = %(<cfdi:Concepto ClaveProdServ="25172504" NoIdentificacion="COST37125R17" Cantidad="1" ClaveUnidad="H87" Unidad="Pieza" Descripcion="Producto de prueba" ValorUnitario="1000.00" Importe="1000.00"><cfdi:Impuestos><cfdi:Traslados><cfdi:Traslado Base="1000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="160.00" /></cfdi:Traslados></cfdi:Impuestos></cfdi:Concepto>)
 
