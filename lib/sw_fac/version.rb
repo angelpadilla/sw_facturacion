@@ -1,3 +1,3 @@
 module SwFac
-  VERSION = "0.3.59"
+  VERSION = "0.3.61"
 end

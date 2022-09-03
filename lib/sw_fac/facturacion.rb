@@ -12,7 +12,8 @@ module SwFac
 			#   receptor_rfc: 'XAXX010101000',
 			#   forma_pago: '01',
 			#   total: 100.00,
-			# 	time: '',
+			# 	time_pago: '',
+			# 	time_now: '',
 			# 	modena: '',
 			# 	line_items: [
 			# 		{
@@ -36,9 +37,16 @@ module SwFac
 				raise 'Error SW - la suma de los complementos de pago es mayor al total reportado' 
 			end
 
+			unless params[:time_pago] and params[:time_pago].size > 0
+				raise "la fecha de timbrado debe de estar presente"
+			end
+
+
+
 			uri = @production ? URI("#{SwFac::UrlProduction}cfdi33/stamp/customv1/b64") : URI("#{SwFac::UrlDev}cfdi33/stamp/customv1/b64")
 			token = @production ? @production_token : @dev_token
-			time = params.fetch(:time, (Time.now).strftime("%Y-%m-%dT%H:%M:%S"))
+			time_now = params.fetch(:time_now, (Time.now).strftime("%Y-%m-%dT%H:%M:%S"))
+			time_pago = params[:time_pago]
 
 
 			base_doc = %(<?xml version="1.0" encoding="UTF-8"?>
@@ -57,13 +65,13 @@ module SwFac
 				</cfdi:Comprobante>)
 
 			base_doc.delete!("\n")
-				base_doc.delete!("\t")
+			base_doc.delete!("\t")
 
-				xml = Nokogiri::XML(base_doc)
+			xml = Nokogiri::XML(base_doc)
 			comprobante = xml.at_xpath("//cfdi:Comprobante")
 			comprobante['Serie'] = 'P'
 			comprobante['Folio'] = params[:venta_folio].to_s
-			comprobante['Fecha'] = time
+			comprobante['Fecha'] = time_now
 			comprobante['LugarExpedicion'] = params[:cp].to_s
 			comprobante['NoCertificado'] = @serial
 			comprobante['Certificado'] = @cadena
@@ -76,7 +84,7 @@ module SwFac
 			receptor['Rfc'] = params[:receptor_rfc].to_s
 
 			child_pago = xml.at_xpath("//pago10:Pago")
-			child_pago['FechaPago'] = time
+			child_pago['FechaPago'] = time_pago
 			child_pago['FormaDePagoP'] = params[:forma_pago].to_s
 			child_pago['MonedaP'] = params.fetch(:moneda, 'MXN')
 			child_pago['Monto'] = params[:total].round(2).to_s
@@ -84,19 +92,19 @@ module SwFac
 			saldo_anterior = params[:total]
 
 			params[:line_items].each_with_index do |line, index|
-			monto = line[:monto].to_f
-			child_pago_relacionado = Nokogiri::XML::Node.new "pago10:DoctoRelacionado", xml
-			child_pago_relacionado['IdDocumento'] = params[:uuid]
-			child_pago_relacionado['MonedaDR'] = line.fetch(:moneda, 'MXN') 
-			child_pago_relacionado['MetodoDePagoDR'] = 'PPD'
-			child_pago_relacionado['NumParcialidad'] = (index + 1).to_s
+				monto = line[:monto].to_f
+				child_pago_relacionado = Nokogiri::XML::Node.new "pago10:DoctoRelacionado", xml
+				child_pago_relacionado['IdDocumento'] = params[:uuid]
+				child_pago_relacionado['MonedaDR'] = line.fetch(:moneda, 'MXN') 
+				child_pago_relacionado['MetodoDePagoDR'] = 'PPD'
+				child_pago_relacionado['NumParcialidad'] = (index + 1).to_s
 
-			child_pago_relacionado['ImpSaldoAnt'] = (saldo_anterior).round(2).to_s
-			child_pago_relacionado['ImpPagado'] = monto.round(2).to_s
-			child_pago_relacionado['ImpSaldoInsoluto'] = (saldo_anterior - monto).round(2).to_s
-			saldo_anterior -= monto 
+				child_pago_relacionado['ImpSaldoAnt'] = (saldo_anterior).round(2).to_s
+				child_pago_relacionado['ImpPagado'] = monto.round(2).to_s
+				child_pago_relacionado['ImpSaldoInsoluto'] = (saldo_anterior - monto).round(2).to_s
+				saldo_anterior -= monto 
 
-			child_pago.add_child(child_pago_relacionado)
+				child_pago.add_child(child_pago_relacionado)
 			end
 
 			# puts '---------------- Xml resultante comprobante de pago -----------------------'
@@ -122,7 +130,7 @@ module SwFac
 			# puts '------ comprobante de pago antes de timbre -------'
 			# puts xml.to_xml
 
-				base64_xml = Base64.encode64(xml.to_xml)
+			base64_xml = Base64.encode64(xml.to_xml)
 			request = Net::HTTP::Post.new(uri)
 			request.basic_auth(token, "")
 			request.content_type = "application/json"
@@ -147,7 +155,7 @@ module SwFac
 			})
 
 			req_options = {
-			use_ssl: false,
+				use_ssl: false,
 			}
 
 			json_response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
@@ -404,6 +412,46 @@ module SwFac
 
 		end
 
+		def timbra_v4(params={})
+			puts "---- SwFacturacion:facturacion:timbra_v4"
+
+			### sample params
+			# 
+			# params = {
+			# 	moneda: 'MXN',
+			# 	series: 'FA',
+			# 	folio: '003',
+			# 	forma_pago: '',
+			# 	metodo_pago: 'PUE',
+			# 	cp: '47180',
+			# 	receptor_razon: 'Car zone',
+			# 	receptor_rfc: '',
+			# 	receptor_regimen: '',
+			# 	uso_cfdi: 'G03',
+			#   time: "%Y-%m-%dT%H:%M:%S",
+			# 	line_items: [
+			# 		{
+			# 			clave_prod_serv: '78181500',
+			#  			clave_unidad: 'E48',
+			#  			unidad: 'Servicio',
+			#  			sku: 'serv001',
+			#  			cantidad: 1,
+			#  			descripcion: 'Servicio mano de obra',
+			#  			valor_unitario: 100.00,
+			#  			descuento: 0.00,
+			#  			tax_included: true,
+			#           retencion_iva: 0, 6, 16
+			#  			# Optional parameters
+			# 		},
+			# 	]
+
+			# }
+			
+			uri = @production ? URI("#{SwFac::UrlProduction}cfdi33/stamp/customv1/b64") : URI("#{SwFac::UrlDev}cfdi33/stamp/customv1/b64")
+			token = @production ? @production_token : @dev_token
+			time = params.fetch(:time, (Time.now).strftime("%Y-%m-%dT%H:%M:%S"))
+		end
+
 		def timbra_doc(params={})
 			### sample params
 			# 
@@ -646,8 +694,8 @@ module SwFac
 			id = SecureRandom.hex
 
 			FileUtils.mkdir_p(path) unless File.exist?(path)
-				File.write("#{path}/tmp_#{id}.xml", xml.to_xml)
-				xml_path = "#{path}/tmp_#{id}.xml"
+			File.write("#{path}/tmp_#{id}.xml", xml.to_xml)
+			xml_path = "#{path}/tmp_#{id}.xml"
 			cadena_path = File.join(File.dirname(__FILE__), *%w[.. cadena cadena33.xslt])
 
 			# puts File.read(cadena_path)
